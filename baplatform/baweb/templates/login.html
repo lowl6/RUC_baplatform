@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>登录</title> 
+    <title>登录与注册</title> 
     <link rel="stylesheet" href="../static/css/login.css">
     <link rel="stylesheet" href="../static/plugins/bootstrap-3.4.1/css/bootstrap.css">
     <link rel="stylesheet" href="../static/plugins/font-awesome-4.7.0/css/font-awesome.css">
@@ -19,38 +19,84 @@
                 <img src="../static/img/logo.png">
             </h1>
             <div class="content">
-                <h2 class="wordstyle">登录</h2>
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label class="wordstyle left">用户名:</label>
-                        {{ form.username }}
-                        <span class="error-msg" style="color: red;"> {{ form.username.errors.0 }}</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="wordstyle left">密码:</label>
-                        {{ form.password }}
-                        <span class="error-msg" style="color: red;">{{ form.password.errors.0 }}</span>
-                    </div>
-
-                    <div class="form-group">
-                        <div>
-                            <label class="wordstyle left">图片验证码：</label>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4 ">
-                                {{ form.code }}
+                <!-- 标签页切换 -->
+                <div class="tab-container">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a href="#login-tab" data-toggle="tab" class="wordstyle">登录</a></li>
+                        <li><a href="#register-tab" data-toggle="tab" class="wordstyle">注册</a></li>
+                    </ul>
+                </div>
+                
+                <!-- 登录表单 -->
+                <div class="tab-content">
+                    <div class="tab-pane active" id="login-tab">
+                        <form method="post" action="/login/">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label class="wordstyle left">用户名:</label>
+                                {{ form.username }}
+                                <span class="error-msg" style="color: red;"> {{ form.username.errors.0 }}</span>
                             </div>
-                            <div class="col-md-4" style="padding-left: 0px;">
-                                <img id='image_code' src="/image/code/" onclick="Reload();">
-                            </div>                          
-                        </div>  
-                        <span class="error-msg" style="color: red;">{{ form.code.errors.0 }}</span>
+
+                            <div class="form-group">
+                                <label class="wordstyle left">密码:</label>
+                                {{ form.password }}
+                                <span class="error-msg" style="color: red;">{{ form.password.errors.0 }}</span>
+                            </div>
+
+                            <div class="form-group">
+                                <div>
+                                    <label class="wordstyle left">图片验证码：</label>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 ">
+                                        {{ form.code }}
+                                    </div>
+                                    <div class="col-md-4" style="padding-left: 0px;">
+                                        <img id='image_code' src="/image/code/" onclick="Reload();">
+                                    </div>                          
+                                </div>  
+                                <span class="error-msg" style="color: red;">{{ form.code.errors.0 }}</span>
+                            </div>
+
+                            <input type="submit" value="登录" class="btn btn-primary buttonstyle">
+                        </form>
                     </div>
 
-                    <input type="submit" value="登录" class="btn btn-primary buttonstyle">
-                </form>
+                    <!-- 注册表单 -->
+                    <div class="tab-pane" id="register-tab">
+                        <form id="register-form">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label class="wordstyle left">用户名:</label>
+                                <input type="text" name="username" class="form-control" placeholder="请输入用户名">
+                                <span class="error-msg" style="color: red;"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="wordstyle left">密码:</label>
+                                <input type="password" name="password" class="form-control" placeholder="请输入密码">
+                                <span class="error-msg" style="color: red;"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="wordstyle left">确认密码:</label>
+                                <input type="password" name="confirm_password" class="form-control" placeholder="请再次输入密码">
+                                <span class="error-msg" style="color: red;"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="wordstyle left">用户类型:</label>
+                                <select name="type" class="form-control">
+                                    <option value="1">学生</option>
+                                    <option value="2">老师</option>
+                                </select>
+                            </div>
+
+                            <button type="button" id="register-btn" class="btn btn-primary buttonstyle">注册</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -61,5 +107,41 @@
     function Reload(){
         location.reload("true");
     }
+    
+    // 注册表单处理
+    $(document).ready(function(){
+        $('#register-btn').click(function() {
+            // 清空之前的错误信息
+            $('.error-msg').empty();
+            
+            // 获取表单数据
+            var formData = $('#register-form').serialize();
+            
+            // 发送AJAX请求
+            $.ajax({
+                url: '/signup/',
+                type: 'POST',
+                data: formData,
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status) {
+                        // 注册成功
+                        alert('注册成功，请登录！');
+                        // 切换到登录标签页
+                        $('.nav-tabs a[href="#login-tab"]').tab('show');
+                    } else {
+                        // 显示错误信息
+                        $.each(res.error, function(field, errors) {
+                            var error_msg = errors[0];
+                            $('input[name="' + field + '"]').next('.error-msg').text(error_msg);
+                        });
+                    }
+                },
+                error: function() {
+                    alert('注册失败，请稍后重试！');
+                }
+            });
+        });
+    });
 </script>
-</hmtl>
+</html>
